@@ -10,7 +10,6 @@ from timm.models.layers import DropPath
 
 from model.graph_frames import Graph
 
-
 class Mlp(nn.Module):
     def __init__(
         self,
@@ -215,8 +214,7 @@ class Block(nn.Module):  #
             out_features=17,
             act_layer=act_layer,
             drop=0.05,
-        )  # 0.15
-        # self.mlp = Mlp(in_features=dim, hidden_features=1024, act_layer=act_layer, drop=drop)
+        )  
 
     def forward(self, x):
         # B,J,dim
@@ -239,13 +237,11 @@ class Block(nn.Module):  #
 
         return x
 
-
 class GCN_MLP(nn.Module):
     def __init__(
         self, depth, embed_dim, channels_dim, tokens_dim, adj, drop_rate=0.10, length=27
     ):
         super().__init__()
-        # depth = args.layers=3, embed_dim=args.channel=512, channels_dim=args.d_hid=1024, tokens_dim=args.token_dim=256(set by myself)
 
         drop_path_rate = 0.2
         norm_layer = partial(nn.LayerNorm, eps=1e-6)
@@ -280,7 +276,7 @@ class GCN_MLP(nn.Module):
         return mu, s
 
 
-class encoder(nn.Module):  # 2,256,512
+class encoder(nn.Module):
     def __init__(
         self,
         in_features,
@@ -345,7 +341,7 @@ class Model(nn.Module):
             args.token_dim,
             self.A,
             length=args.n_joints,
-        )  # 256
+        )  
         self.pred_mu = decoder(args.channel, args.channel // 2, 3)
         self.pred_s = decoder(args.channel, args.channel // 2, 1)
 
