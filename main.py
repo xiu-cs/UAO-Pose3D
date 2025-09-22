@@ -52,7 +52,7 @@ def step_Gaussian(split, args, actions, dataLoader, model, optimizer=None, epoch
         
         if split == 'train':
             
-            mu, s = model_gaussian(input_2D) # mu:B,1,17,3, s:B,1,17,3
+            mu, s = model_gaussian(input_2D)
             
             N = input_2D.size(0)
 
@@ -73,53 +73,10 @@ def step_Gaussian(split, args, actions, dataLoader, model, optimizer=None, epoch
             
             mu_nonflip, _ = model_gaussian(nonflip_2D)
             mu_flip, _ = model_gaussian(flip_2D)
-            
-            if args.test_time_optimization:
-                mu_nonflip_pseudo_gt = mu_nonflip
-                mu_flip_pseudo_gt = mu_flip
-                
-                z_non_flip = nn.Parameter(nonflip_2D.clone(), requires_grad=True)
-                z_flip = nn.Parameter(flip_2D.clone(), requires_grad=True)
-                opt_z = torch.optim.Adam([z_non_flip, z_flip], lr = 0.001)
-                iter_opt = args.opt_iter_num
-                for iter_idx in range(iter_opt):
-                    output_3D_nonflip, s_nonflip_gt = model_gaussian(z_non_flip)
-                    output_3D_flip, s_flip_gt = model_gaussian(z_flip)
-
-                    s_flip_gt[:, :, args.joints_left + args.joints_right, :] = s_flip_gt[:, :, args.joints_right + args.joints_left, :]     
-                    output_3D_flip[:, :, :, 0] *= -1 
-                    output_3D_flip[:, :, args.joints_left + args.joints_right, :] = output_3D_flip[:, :, args.joints_right + args.joints_left, :] 
-                    # gaussian loss for nonflip and flip
-                    loss_nonflip_gaussian = gaussian_loss(mu_nonflip_pseudo_gt.detach(), s_nonflip_gt.detach(), output_3D_nonflip) #
-                    loss_flip_gaussian = gaussian_loss(mu_flip_pseudo_gt.detach(), s_flip_gt.detach(), output_3D_flip) #
-
-                    # loss proj 2d for nonflip and flip
-                    output_3D_nonflip[:,:,1:] += gt_3D[:,:,:1] # recover to absolute coordinate
-                    output_3D_nonflip[:,:,:1] =  gt_3D[:,:,:1]
-                    proj_nonflip_2d = project_to_2d(output_3D_nonflip, batch_cam)
-                    loss_nonflip_proj = mpjpe_cal(proj_nonflip_2d, nonflip_2D)
-                    output_3D_flip[:,:,1:] += gt_3D[:,:,:1] # recover to absolute coordinate
-                    output_3D_flip[:,:,:1] = gt_3D[:,:,:1]
-                    proj_flip_2d = project_to_2d(output_3D_flip, batch_cam)
-                    loss_flip_proj = mpjpe_cal(proj_flip_2d, nonflip_2D)
-
-                    opt_loss = (loss_nonflip_gaussian + loss_flip_gaussian)*args.weight_gaussian + (loss_nonflip_proj + loss_flip_proj)*args.weight_proj
-                    opt_z.zero_grad()
-                    opt_loss.backward()
-                    opt_z.step()
-                
-                with torch.no_grad():
-                    output_3D_nonflip_z, _ = model_gaussian(z_non_flip)
-                    output_3D_flip_z, _ = model_gaussian(z_flip)
-                output_3D_flip_z[:, :, :, 0] *= -1
-                output_3D_flip_z[:, :, args.joints_left + args.joints_right, :] = output_3D_flip_z[:, :, args.joints_right + args.joints_left, :]
-
-                mu = (output_3D_nonflip_z + output_3D_flip_z) / 2
-                
-            else:
-                mu_flip[:, :, :, 0] *= -1
-                mu_flip[:, :, args.joints_left + args.joints_right, :] = mu_flip[:, :, args.joints_right + args.joints_left, :]
-                mu = (mu_nonflip + mu_flip) / 2
+                            
+            mu_flip[:, :, :, 0] *= -1
+            mu_flip[:, :, args.joints_left + args.joints_right, :] = mu_flip[:, :, args.joints_right + args.joints_left, :]
+            mu = (mu_nonflip + mu_flip) / 2
             
             mu[:, :, args.root_joint] = 0
 
@@ -212,31 +169,10 @@ def test_time_optimization_Gaussian(args, actions, dataLoader, model):
 
     mu_p1, mu_p2 = print_error(args.dataset, action_error_sum, args.train)
     return mu_p1, mu_p2
-    
-def input_augmentation(input_2D, model):
-    joints_left = [4, 5, 6, 11, 12, 13] 
-    joints_right = [1, 2, 3, 14, 15, 16]
-
-    input_2D_non_flip = input_2D[:, 0]
-    input_2D_flip = input_2D[:, 1]
-
-    output_3D_non_flip = model(input_2D_non_flip)
-    output_3D_flip     = model(input_2D_flip)
-
-    output_3D_flip[:, :, :, 0] *= -1
-    output_3D_flip[:, :, joints_left + joints_right, :] = output_3D_flip[:, :, joints_right + joints_left, :] 
-
-    output_3D = (output_3D_non_flip + output_3D_flip) / 2
-
-    input_2D = input_2D_non_flip
-
-    return input_2D, output_3D
-
 
 if __name__ == '__main__':
     manualSeed = 1
     random.seed(manualSeed)
-    torch.manual_seed(manualSeed)
     torch.manual_seed(manualSeed)
     np.random.seed(manualSeed)
     torch.cuda.manual_seed_all(manualSeed)
