@@ -211,7 +211,7 @@ def save_model(previous_name, save_dir, epoch, data_threshold, model, model_name
 
 def back_to_ori_uv(cropped_uv,bb_box):
     """
-    for cropped uv, back to original uv to help do the uvd->xyz operation
+    Map cropped UV coordinates back to the original image coordinates.
     :return:
     """
     N, T, V,_ = cropped_uv.size()
@@ -221,7 +221,7 @@ def back_to_ori_uv(cropped_uv,bb_box):
 
 def get_uvd2xyz(uvd, gt_3D, cam):
     """
-    transfer uvd to xyz
+    Convert UVD coordinates to XYZ coordinates.
 
     :param uvd: N*T*V*3 (uv and z channel)
     :param gt_3D: N*T*V*3 (NOTE: V=0 is absolute depth value of root joint)
@@ -238,7 +238,7 @@ def get_uvd2xyz(uvd, gt_3D, cam):
     cam_f_all = cam[..., :2].view(-1,1,1,2).repeat(1,T,V,1) # N*T*V*2
     cam_c_all = cam[..., 2:4].view(-1,1,1,2).repeat(1,T,V,1)# N*T*V*2
 
-    # change to global
+    # Convert relative depth predictions to global depth.
     z_global = dec_out_all[:, :, :, 2]# N*T*V
     z_global[:, :, 0] = root[:, :, 0, 2]
     z_global[:, :, 1:] = dec_out_all[:, :, 1:, 2] + root[:, :, 1:, 2]  # N*T*V
@@ -253,7 +253,7 @@ def get_uvd2xyz(uvd, gt_3D, cam):
 
 def sym_penalty(dataset,keypoints,pred_out):
     """
-    get penalty for the symmetry of human body
+    Compute a symmetry penalty for the predicted pose.
     :return:
     """
     loss_sym = 0
