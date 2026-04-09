@@ -314,16 +314,15 @@ if __name__ == "__main__":
     model["gaussian"] = Gaussian(args).to(device)
 
     if args.reload_model:
-        model_gaussian_dict = model["gaussian"].state_dict()
         model_path = args.model_path
         pre_dict = torch.load(model_path, map_location=device)
-        compatible_dict = {
-            name: value
-            for name, value in pre_dict.items()
-            if name in model_gaussian_dict and model_gaussian_dict[name].shape == value.shape
-        }
-        model_gaussian_dict.update(compatible_dict)
-        model["gaussian"].load_state_dict(model_gaussian_dict)
+        if "state_dict" in pre_dict:
+            pre_dict = pre_dict["state_dict"]
+
+        if len(pre_dict) > 0 and all(name.startswith("module.") for name in pre_dict):
+            pre_dict = {name[7:]: value for name, value in pre_dict.items()}
+
+        model["gaussian"].load_state_dict(pre_dict, strict=True)
 
     all_param = []
     lr = args.lr
