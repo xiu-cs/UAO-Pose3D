@@ -206,9 +206,9 @@ class Human36mDataset(MocapDataset):
         super().__init__(fps=50, skeleton=h36m_skeleton)
         self.train_list = ['S1', 'S5', 'S6', 'S7', 'S8']
         self.test_list = ['S9', 'S11']
-        # 加载相机位姿参数
+        # Load camera pose parameters.
         self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
-        for cameras in self._cameras.values(): # type(values)=list,type(cam)=dict
+        for cameras in self._cameras.values():
             for i, cam in enumerate(cameras):
                 cam.update(h36m_cameras_intrinsic_params[i])
                 for k, v in cam.items():
@@ -228,18 +228,18 @@ class Human36mDataset(MocapDataset):
                                                    cam['radial_distortion'],
                                                    cam['tangential_distortion']))
 
-        data = np.load(path,allow_pickle=True)['positions_3d'].item() # type(data)= dict,len=7, {'S1':{'action':},'S5':[],...,'S11':[]} ，len(actions)>=15, 
+        data = np.load(path,allow_pickle=True)['positions_3d'].item()
 
-        self._data = {}    # {'S1':{'action1':{'positions': positions,'cameras': self._cameras[subject]}},}
+        self._data = {}
         for subject, actions in data.items():
             self._data[subject] = {}
             for action_name, positions in actions.items():
                 self._data[subject][action_name] = {
                     'positions': positions,
-                    'cameras': self._cameras[subject], # 每一个subject下所有动作的cameras参数相等
+                    'cameras': self._cameras[subject], # Cameras are shared across actions for each subject.
                 }
 
-        if remove_static_joints: # total 32keypoints, removed 15joints, remain 17 joints
+        if remove_static_joints: # Keep the standard 17-joint Human3.6M subset.
             self.remove_joints([4, 5, 9, 10, 11, 16, 20, 21, 22, 23, 24, 28, 29, 30, 31])
 
             self._skeleton._parents[11] = 8
@@ -247,6 +247,5 @@ class Human36mDataset(MocapDataset):
 
     def supports_semi_supervised(self):
         return True
-
 
 

@@ -19,6 +19,7 @@ from common.utils import *
 args = parse_args().parse()
 exec("from model." + args.model + " import Model as Gaussian")
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train_gaussian(args, actions, train_loader, model, optimizer, epoch):
@@ -48,7 +49,7 @@ def step_Gaussian(split, args, actions, dataLoader, model, optimizer=None, epoch
     for i, data in enumerate(tqdm(dataLoader, 0)):
 
         batch_cam, gt_3D, input_2D, action, subject, scale, bb_box, cam_ind = data
-        [input_2D, gt_3D, batch_cam, scale, bb_box] = get_varialbe(
+        [input_2D, gt_3D, batch_cam, scale, bb_box] = get_variable(
             split, [input_2D, gt_3D, batch_cam, scale, bb_box]
         )
         # 2d_train: [B,1,17,2] 2D_test: [B,2,1,17,2]
@@ -113,7 +114,7 @@ def test_time_optimization_Gaussian(args, actions, dataLoader, model):
 
     for i, data in enumerate(tqdm(dataLoader, 0)):
         batch_cam, gt_3D, input_2D, action, subject, scale, bb_box, cam_ind = data
-        [input_2D, gt_3D, batch_cam, scale, bb_box] = get_varialbe(
+        [input_2D, gt_3D, batch_cam, scale, bb_box] = get_variable(
             split, [input_2D, gt_3D, batch_cam, scale, bb_box]
         )
         # 2d_train: [B,1,17,2] 2D_test: [B,2,1,17,2]
@@ -213,7 +214,8 @@ if __name__ == "__main__":
     random.seed(manualSeed)
     torch.manual_seed(manualSeed)
     np.random.seed(manualSeed)
-    torch.cuda.manual_seed_all(manualSeed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(manualSeed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
@@ -309,23 +311,26 @@ if __name__ == "__main__":
         )
 
     model = {}
-    model["gaussian"] = Gaussian(args).cuda()
+    model["gaussian"] = Gaussian(args).to(device)
 
     if args.reload_model:
-        model_gaussian_dict = model["gaussian"].state_dict()
         model_path = args.model_path
-        pre_dict = torch.load(model_path)
-        for name, key in model_gaussian_dict.items():
-            model_gaussian_dict[name] = pre_dict[name]
-        model["gaussian"].load_state_dict(model_gaussian_dict)
+        pre_dict = torch.load(model_path, map_location=device)
+        if "state_dict" in pre_dict:
+            pre_dict = pre_dict["state_dict"]
+
+        if len(pre_dict) > 0 and all(name.startswith("module.") for name in pre_dict):
+            pre_dict = {name[7:]: value for name, value in pre_dict.items()}
+
+        model["gaussian"].load_state_dict(pre_dict, strict=True)
 
     all_param = []
-    all_paramters = 0
     lr = args.lr
     all_param += list(model["gaussian"].parameters())
+    all_parameters = sum(parameter.numel() for parameter in all_param)
 
-    print(all_paramters)
-    logging.info(all_paramters)
+    print(all_parameters)
+    logging.info(all_parameters)
 
     optimizer = optim.Adam(all_param, lr=args.lr, amsgrad=True)
 
@@ -368,7 +373,8 @@ if __name__ == "__main__":
                 text_name = "best result:{:.3f}, best epoch:{}".format(
                     args.previous_best_threshold, best_epoch
                 )
-                os.mknod(os.path.join(args.checkpoint, text_name))
+                with open(os.path.join(args.checkpoint, text_name), "a", encoding="utf-8"):
+                    pass
 
             if args.train == 0:
                 break

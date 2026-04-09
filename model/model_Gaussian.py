@@ -40,8 +40,8 @@ class GCN(nn.Module):
     def __init__(self, in_channels, out_channels, adj):
         super().__init__()
 
-        self.adj = adj  # 4,17,17
-        self.kernel_size = adj.size(0)
+        self.register_buffer("adj", adj, persistent=False)  # 4,17,17
+        self.kernel_size = self.adj.size(0)
         #
         self.conv1d = nn.Conv1d(
             in_channels, out_channels * self.kernel_size, kernel_size=1
@@ -81,7 +81,7 @@ class spatial_uMLP(nn.Module):
         out_features=None,
         act_layer=nn.GELU,
         drop=0.0,
-    ):  # zheli
+    ):
         super().__init__()
 
         self.linear_down = linear_block(in_features, hidden_features, drop)
@@ -106,7 +106,7 @@ class spatial_uMLP_Multi(nn.Module):
         out_features=None,
         act_layer=nn.GELU,
         drop=0.0,
-    ):  # zheli
+    ):
         super().__init__()
 
         self.linear_up1 = linear_block(in_features, hidden_features // 2, drop)
@@ -136,7 +136,7 @@ class channel_uMLP(nn.Module):
         out_features=None,
         act_layer=nn.GELU,
         drop=0.0,
-    ):  # zheli
+    ):
         super().__init__()
 
         self.linear_down = linear_block(in_features, hidden_features, drop)
@@ -158,7 +158,7 @@ class channel_uMLP(nn.Module):
 class spatial_channel_uMLP(nn.Module):
     def __init__(
         self, dim=512, length=17, act_layer=nn.GELU, norm_layer=nn.LayerNorm, drop=0.0
-    ):  # zheli
+    ):
         super().__init__()
 
         self.norm1 = norm_layer(dim)
@@ -300,7 +300,7 @@ class encoder(nn.Module):
         return x
 
 
-class decoder(nn.Module):  # 2,256,512
+class decoder(nn.Module):
     def __init__(
         self,
         in_features,
@@ -328,11 +328,11 @@ class Model(nn.Module):
     def __init__(self, args):
         super().__init__()
 
-        ## GCN
+        # GCN
         self.graph = Graph("hm36_gt", "spatial", pad=1)
-        self.A = nn.Parameter(
-            torch.tensor(self.graph.A, dtype=torch.float32), requires_grad=False
-        ).cuda(0)
+        self.register_buffer(
+            "A", torch.tensor(self.graph.A, dtype=torch.float32), persistent=False
+        )
         self.encoder = encoder(2, args.channel // 2, args.channel)
         self.GCN_MLP = GCN_MLP(
             args.layers,
