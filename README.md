@@ -10,11 +10,11 @@ This is the official implementation of the approach described in the paper:
 
 ## Dataset Setup
 
-### Setup from original source 
+### Setup from original source
 You can obtain the Human3.6M dataset from the [Human3.6M](http://vision.imar.ro/human3.6m/) website, and then set it up using the instructions provided in [VideoPose3D](https://github.com/facebookresearch/VideoPose3D). 
 
 ### Setup from preprocessed dataset (Recommended)
- You also can access the processed data by downloading it from [here](https://drive.google.com/drive/folders/112GPdRC9IEcwcJRyrLJeYw9_YV4wLdKC?usp=sharing).
+You can also access the processed data by downloading it from [here](https://drive.google.com/drive/folders/112GPdRC9IEcwcJRyrLJeYw9_YV4wLdKC?usp=sharing).
 
 ```bash
 ${POSE_ROOT}/
@@ -30,10 +30,10 @@ ${POSE_ROOT}/
 
 This work was originally tested on NVIDIA RTX 3090, with:
 - Python: 3.7.18
-- Pytorch: 1.10.0 
-- Cudatoolkit: 10.2
+- PyTorch: 1.10.0
+- CUDA Toolkit: 10.2
 
-- To create the environment: 
+To create the environment:
 ``` bash
 conda create -n uao_ori python=3.7 --file ./env/original_conda_env.txt
 conda activate uao_ori
@@ -44,8 +44,8 @@ conda activate uao_ori
 For newer GPUs (e.g., RTX 4090, which does not support CUDA 10.2), we provide an updated environment. Tested on RTX 4090 with:
 
 - Python: 3.10.18
-- Pytorch: 1.13.1 
-- Cudatoolkit: 11.7
+- PyTorch: 1.13.1
+- CUDA Toolkit: 11.7
 
 To create the environment:
 ```bash
@@ -74,7 +74,7 @@ Pre-trained models can be downloaded [here](https://drive.google.com/drive/folde
 To run inference on Human3.6M:
 
 ```bash
-python main.py --test --batch_size 512 --model model_Gaussian --reload_model --layers 3 --pad 0 --gpu 1 --model_path "path-to-the-pre-trained-model"
+python main.py --test 1 --batch_size 512 --model model_Gaussian --reload_model --layers 3 --pad 0 --gpu 1 --model_path "path-to-the-pre-trained-model"
 ```
 
 ### Test-Time Optimization (Proposed Strategy)
@@ -85,7 +85,7 @@ This module is **plug-and-play** and can be easily extended to other 2D-to-3D li
 
 Run the following command for inference with optimization:
 ```bash
-python main.py --test --test_time_optimization --opt_iter_num 4 --batch_size 512 --model model_Gaussian --reload_model --layers 3 --pad 0 --gpu 1 --model_path "./pre_trained_models/Model_Gaussian_p1_4941.pth"
+python main.py --test 1 --test_time_optimization --opt_iter_num 4 --batch_size 512 --model model_Gaussian --reload_model --layers 3 --pad 0 --gpu 1 --model_path "./pre_trained_models/Model_Gaussian_p1_4941.pth"
 ```
 
 ## Performance
@@ -99,7 +99,7 @@ We report mean per joint position error (MPJPE, in millimeters) on the Human3.6M
 
 ## Acknowledgement
 
-Our code is extended from the following repositories. We thank the authors for releasing the codes. 
+This codebase extends the following repositories. We thank the authors for releasing their code.
 
 - [MHFormer](https://github.com/Vegetebird/MHFormer)
 - [StridedTransformer-Pose3D](https://github.com/Vegetebird/StridedTransformer-Pose3D)
