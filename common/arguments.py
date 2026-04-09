@@ -48,17 +48,17 @@ class opts():
         self.parser.add_argument('--create_file', type=int, default=1)
         self.parser.add_argument('--debug', action='store_true')
         
-        # param for optimization z
+        # Parameters for test-time optimization
         self.parser.add_argument('--lr_z', type=float, default=1e-3)
         self.parser.add_argument('--lr_opt', type=float, default=1e-3)
-        self.parser.add_argument('--opt_iter_num', type=int, default=4) #
+        self.parser.add_argument('--opt_iter_num', type=int, default=4)
         self.parser.add_argument('--test_time_optimization', action='store_true')
         self.parser.add_argument('--weight_proj', type=int, default=1)
         self.parser.add_argument('--weight_gaussian', type=int, default=0.005)
         self.parser.add_argument('--train_views', type=int, nargs='+', default=[0,1,2,3])
         self.parser.add_argument('--test_views', type=int, nargs='+', default=[0,1,2,3])
 
-        # param for reload model
+        # Parameters for checkpoint loading
         self.parser.add_argument('--reload_model', action='store_true')
         self.parser.add_argument('--model_path', type=str, default='')
         
