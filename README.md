@@ -4,7 +4,7 @@ This is the official implementation of the approach described in the paper:
 
 > [**Uncertainty-Aware Testing-Time Optimization for 3D Human Pose Estimation**](https://arxiv.org/pdf/2402.02339),            
 > Ti Wang, Mengyuan Liu, Hong Liu, Bin Ren, Yingxuan You, Wenhao Li, Nicu Sebe, Xia Li         
-> *Accepted by IEEE Transactions on Multimedia (TMM), 2025.*
+> *Published in IEEE Transactions on Multimedia (TMM), 2026.*
 
 <p align="center"><img src="./figures/Opt_framework.png" width="60%" alt="" /></p>
 
@@ -117,10 +117,11 @@ This project is licensed under the terms of the MIT license.
 
 If you find our work useful, please consider citing:
 ```bibtex
-@article{wang2024uncertainty,
+@article{wang2026uncertainty,
   title={Uncertainty-Aware Testing-Time Optimization for 3D Human Pose Estimation},
   author={Wang, Ti and Liu, Mengyuan and Liu, Hong and Ren, Bin and You, Yingxuan and Li, Wenhao and Sebe, Nicu and Li, Xia},
-  journal={arXiv preprint arXiv:2402.02339},
-  year={2024}
+  journal={IEEE Transactions on Multimedia},
+  year={2026},
+  publisher={IEEE}
 }
 ```
