@@ -14,7 +14,7 @@ class ChunkedGenerator:
         start_index = 0
         
         for key in poses_2d.keys():
-            assert poses_3d is None or poses_3d[key].shape[0] == poses_3d[key].shape[0]
+            assert poses_3d is None or poses_3d[key].shape[0] == poses_2d[key].shape[0]
             n_chunks = (poses_2d[key].shape[0] + chunk_length - 1) // chunk_length
             offset = (n_chunks * chunk_length - poses_2d[key].shape[0]) // 2
             bounds = np.arange(n_chunks + 1) * chunk_length - offset
@@ -30,9 +30,10 @@ class ChunkedGenerator:
                 else:
                     pairs += list(zip(keys, bounds[:-1], bounds[1:], ~augment_vector, reverse_augment_vector))
 
-            end_index = start_index + poses_3d[key].shape[0]
+            sequence_length = poses_2d[key].shape[0]
+            end_index = start_index + sequence_length
             self.saved_index[key] = [start_index, end_index]
-            start_index = start_index + poses_3d[key].shape[0]
+            start_index = start_index + sequence_length
 
         if cameras is not None:
             self.batch_cam = np.empty((batch_size, cameras[key].shape[-1]))
@@ -152,4 +153,3 @@ class ChunkedGenerator:
 
 
             
-
