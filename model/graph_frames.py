@@ -4,11 +4,11 @@ class Graph():
     """ The Graph to model the skeletons of human body/hand
 
     Args:
-        strategy (string): must be one of the follow candidates
+        strategy (string): must be one of the following candidates
         - spatial: Clustered Configuration
 
-        layout (string): must be one of the follow candidates
-        - 'hm36_gt' same with ground truth structure of human 3.6 , with 17 joints per frame
+        layout (string): must be one of the following candidates
+        - 'hm36_gt' same as the ground-truth structure of Human3.6M, with 17 joints per frame
 
         max_hop (int): the maximal distance between two connected nodes
         dilation (int): controls the spacing between the kernel points
