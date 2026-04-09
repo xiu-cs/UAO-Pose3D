@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import hashlib
-from torch.autograd import Variable
 import os
 def deterministic_random(min_value, max_value, data):
     digest = hashlib.sha256(data.encode()).digest()
@@ -156,19 +155,17 @@ class AccumLoss(object):
         self.count += n
         self.avg = self.sum / self.count
         
-def get_varialbe(split, target):
-    num = len(target)
+def get_variable(split, target):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     var = []
-    if split == 'train':
-        for i in range(num):
-            temp = Variable(target[i], requires_grad=False).contiguous().type(torch.cuda.FloatTensor)
-            var.append(temp)
-    else:
-        for i in range(num):
-            temp = Variable(target[i]).contiguous().cuda().type(torch.cuda.FloatTensor)
-            var.append(temp)
+    for item in target:
+        tensor = torch.as_tensor(item).contiguous().to(device=device, dtype=torch.float32)
+        var.append(tensor)
 
     return var
+
+
+get_varialbe = get_variable
 
 def print_error(data_type, action_error_sum, is_train):
     mean_error_p1, mean_error_p2  = print_error_action(action_error_sum, is_train)
@@ -214,7 +211,7 @@ def save_model(previous_name, save_dir, epoch, data_threshold, model, model_name
 
 def back_to_ori_uv(cropped_uv,bb_box):
     """
-    for cropped uv, back to origial uv to help do the uvd->xyz operation
+    for cropped uv, back to original uv to help do the uvd->xyz operation
     :return:
     """
     N, T, V,_ = cropped_uv.size()
@@ -283,7 +280,7 @@ def project_to_2d(X, camera_params):
 
     Arguments:
     X -- 3D points in *camera space* to transform (N, *, 3)
-    camera_params -- intrinsic parameteres (N, 2+2+3+2=9)
+    camera_params -- intrinsic parameters (N, 2+2+3+2=9)
     """
     assert X.shape[-1] == 3  #  B,J,3
     assert len(camera_params.shape) == 2  # camera_params:[B,1,9]
