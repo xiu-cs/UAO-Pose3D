@@ -46,7 +46,7 @@ class Fusion(data.Dataset):
             self.key_index = self.generator.saved_index
             print('INFO: Testing on {} frames'.format(self.generator.num_frames()))
 
-    def prepare_data(self, dataset, folder_list):  # dataset: {'S1':{'action1':{'positions': positions,'cameras': self._cameras[subject]}},}
+    def prepare_data(self, dataset, folder_list):
         for subject in folder_list:
             for action in dataset[subject].keys():
                 anim = dataset[subject][action]
@@ -58,12 +58,12 @@ class Fusion(data.Dataset):
                     positions_3d.append(pos_3d)
                 anim['positions_3d'] = positions_3d
 
-        keypoints = np.load(self.root_path + 'data_2d_' + self.data_type + '_' + self.keypoints_name + '.npz',allow_pickle=True) # files: positions_2d.npy, metadata.npy
-        keypoints_symmetry = keypoints['metadata'].item()['keypoints_symmetry'] # {'0':[4,5,6,11,12,13],'1':[1,2,3,14,15,16]}
+        keypoints = np.load(self.root_path + 'data_2d_' + self.data_type + '_' + self.keypoints_name + '.npz',allow_pickle=True) # positions_2d.npy and metadata.npy
+        keypoints_symmetry = keypoints['metadata'].item()['keypoints_symmetry']
 
         self.kps_left, self.kps_right = list(keypoints_symmetry[0]), list(keypoints_symmetry[1])
-        self.joints_left, self.joints_right = list(dataset.skeleton().joints_left()), list(dataset.skeleton().joints_right()) # joints_left: [4, 5, 6, 11, 12, 13] joints_right: [1, 2, 3, 14, 15, 16] 
-        keypoints = keypoints['positions_2d'].item() # dict   {'Si':{'actioni':[np.shape(frames,17,2)*4]}} ,  （对应4 calibrated cameras
+        self.joints_left, self.joints_right = list(dataset.skeleton().joints_left()), list(dataset.skeleton().joints_right())
+        keypoints = keypoints['positions_2d'].item() # 2D detections grouped by subject, action, and camera
 
         for subject in folder_list:
             assert subject in keypoints, 'Subject {} is missing from the 2D detections dataset'.format(subject)
@@ -74,12 +74,12 @@ class Fusion(data.Dataset):
                 for cam_idx in range(len(keypoints[subject][action])):
 
                     mocap_length = dataset[subject][action]['positions_3d'][cam_idx].shape[0]
-                    assert keypoints[subject][action][cam_idx].shape[0] >= mocap_length  #
+                    assert keypoints[subject][action][cam_idx].shape[0] >= mocap_length
 
-                    if keypoints[subject][action][cam_idx].shape[0] > mocap_length:  # Shorten sequence  序列对齐 
+                    if keypoints[subject][action][cam_idx].shape[0] > mocap_length:  # Truncate to match the 3D sequence length.
                         keypoints[subject][action][cam_idx] = keypoints[subject][action][cam_idx][:mocap_length]
 
-        for subject in keypoints.keys(): #  坐标正则化
+        for subject in keypoints.keys(): # Normalize image coordinates.
             for action in keypoints[subject]:
                 for cam_idx, kps in enumerate(keypoints[subject][action]):
                     cam = dataset.cameras()[subject][cam_idx]
@@ -87,7 +87,7 @@ class Fusion(data.Dataset):
                         kps[..., :2] = normalize_screen_coordinates(kps[..., :2], w=cam['res_w'], h=cam['res_h'])
                     keypoints[subject][action][cam_idx] = kps
         
-        return keypoints # dict {'Si':{'actioni':[np.shape(frames,17,2)*4]}} 
+        return keypoints
 
     def fetch(self, dataset, subjects, subset=1, views =[0, 1, 2, 3], parse_3d_poses=True):  
         out_poses_3d = {}
